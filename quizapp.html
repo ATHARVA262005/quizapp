@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDG Organizer Quiz</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem; /* Add padding for smaller screens */
+        }
+        .quiz-container {
+            background-color: #ffffff;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 700px; /* Increased max-width for leaderboard */
+            width: 95%; /* Adjust width for responsiveness */
+            border: 1px solid #e2e8f0;
+        }
+        .question-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .question-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        input[type="radio"] {
+            margin-right: 0.75rem;
+            accent-color: #4285F4; /* Google Blue */
+        }
+        label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+        .button-primary {
+            background-color: #4285F4;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+            border: none;
+        }
+        .button-primary:hover {
+            background-color: #357ae8;
+        }
+        .button-secondary {
+            background-color: #f8f9fa;
+            color: #4285F4;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+            border: 1px solid #4285F4;
+        }
+        .button-secondary:hover {
+            background-color: #e8f0fe;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 1.5rem;
+            box-sizing: border-box;
+        }
+        .error-message {
+            color: #ef4444; /* Red-500 */
+            font-size: 0.875rem; /* text-sm */
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .leaderboard-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .leaderboard-table tbody tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">GDG Organizer Quiz</h1>
+
+        <div id="intro-section">
+            <p class="text-gray-700 mb-4">Welcome! Please enter your name and email to start the quiz.</p>
+            <label for="userName" class="block text-gray-700 text-sm font-bold mb-2">Your Name:</label>
+            <input type="text" id="userName" class="input-field" placeholder="Enter your name">
+            <p id="nameError" class="error-message hidden">Please enter your name to proceed.</p>
+
+            <label for="userEmail" class="block text-gray-700 text-sm font-bold mb-2">Your Email:</label>
+            <input type="email" id="userEmail" class="input-field" placeholder="Enter your email">
+            <p id="emailError" class="error-message hidden">Please enter a valid email to proceed.</p>
+
+            <button id="startQuizBtn" class="button-primary w-full">Start Quiz</button>
+        </div>
+
+        <div id="quiz-section" class="hidden">
+            <form id="quizForm">
+                <!-- Questions will be injected here by JavaScript -->
+            </form>
+            <p id="quizError" class="error-message hidden">Please answer all questions before submitting.</p>
+            <button id="submitQuizBtn" class="button-primary w-full mt-6">Submit Quiz</button>
+        </div>
+
+        <div id="result-section" class="hidden text-center mt-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Quiz Results</h2>
+            <p class="text-lg text-gray-700 mb-4">You scored: <span id="scoreDisplay" class="font-bold text-blue-600"></span> out of <span id="totalQuestionsDisplay" class="font-bold text-blue-600"></span></p>
+            <p class="text-sm text-gray-500 mt-2">Your User ID: <span id="userIdDisplay" class="font-mono text-xs"></span></p>
+
+            <h3 class="text-xl font-bold text-gray-800 mt-8 mb-4">Leaderboard</h3>
+            <div id="leaderboard-container" class="overflow-x-auto">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Score</th>
+                            <!-- Date Column is intentionally removed -->
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- Leaderboard entries will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-center mt-6">
+                <button id="downloadLeaderboardBtn" class="button-secondary">Download Leaderboard (CSV)</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Define quiz questions and their correct answers (UPDATED FOR TECHNICAL CONTENT)
+        const quizQuestions = [
+            {
+                question: "What is the time complexity of searching for an element in a balanced Binary Search Tree (BST)?",
+                options: [
+                    "O(1)",
+                    "O(log n)",
+                    "O(n)",
+                    "O(n log n)"
+                ],
+                correctAnswer: "O(log n)"
+            },
+            {
+                question: "Which of the following is NOT a principle of Object-Oriented Programming (OOP)?",
+                options: [
+                    "Encapsulation",
+                    "Polymorphism",
+                    "Inheritance",
+                    "Normalization"
+                ],
+                correctAnswer: "Normalization"
+            },
+            {
+                question: "In operating systems, what is the primary purpose of a 'mutex'?",
+                options: [
+                    "To manage memory allocation",
+                    "To prevent race conditions in critical sections",
+                    "To schedule processes for execution",
+                    "To handle I/O operations"
+                ],
+                correctAnswer: "To prevent race conditions in critical sections"
+            },
+            {
+                question: "Which SQL clause is used to filter records based on a specified condition after grouping?",
+                options: [
+                    "WHERE",
+                    "GROUP BY",
+                    "HAVING",
+                    "ORDER BY"
+                ],
+                correctAnswer: "HAVING"
+            },
+            {
+                question: "Which layer of the OSI model is responsible for logical addressing (IP addresses) and routing?",
+                options: [
+                    "Data Link Layer",
+                    "Network Layer",
+                    "Transport Layer",
+                    "Application Layer"
+                ],
+                correctAnswer: "Network Layer"
+            },
+            {
+                question: "What does 'DOM' stand for in the context of web development?",
+                options: [
+                    "Document Object Model",
+                    "Data Output Module",
+                    "Dynamic Order Management",
+                    "Digital Operating Machine"
+                ],
+                correctAnswer: "Document Object Model"
+            },
+            {
+                question: "Which of the following is a common version control system?",
+                options: [
+                    "Jira",
+                    "Slack",
+                    "Git",
+                    "Trello"
+                ],
+                correctAnswer: "Git"
+            },
+            {
+                question: "What is method overloading in Java?",
+                options: [
+                    "Defining multiple methods with the same name but different return types",
+                    "Defining multiple methods with the same name but different parameters",
+                    "Overriding a method in a subclass",
+                    "Calling a method recursively"
+                ],
+                correctAnswer: "Defining multiple methods with the same name but different parameters"
+            },
+            {
+                question: "Which logic gate outputs true (1) only if both of its inputs are true (1)?",
+                options: [
+                    "OR gate",
+                    "XOR gate",
+                    "NAND gate",
+                    "AND gate"
+                ],
+                correctAnswer: "AND gate"
+            },
+            {
+                question: "If a program has a memory leak, what is the most likely long-term consequence?",
+                options: [
+                    "Increased CPU utilization",
+                    "Faster program execution",
+                    "Decreased network latency",
+                    "Program crashing due to insufficient memory"
+                ],
+                correctAnswer: "Program crashing due to insufficient memory"
+            }
+        ];
+
+        // Get DOM elements
+        const introSection = document.getElementById('intro-section');
+        const quizSection = document.getElementById('quiz-section');
+        const resultSection = document.getElementById('result-section');
+        const userNameInput = document.getElementById('userName');
+        const userEmailInput = document.getElementById('userEmail');
+        const nameError = document.getElementById('nameError');
+        const emailError = document.getElementById('emailError');
+        const startQuizBtn = document.getElementById('startQuizBtn');
+        const quizForm = document.getElementById('quizForm');
+        const quizError = document.getElementById('quizError');
+        const submitQuizBtn = document.getElementById('submitQuizBtn');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const totalQuestionsDisplay = document.getElementById('totalQuestionsDisplay');
+        const downloadLeaderboardBtn = document.getElementById('downloadLeaderboardBtn');
+        // Removed clearLeaderboardBtn
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+
+        // Removed modal elements
+        // const confirmationModal = document.getElementById('confirmationModal');
+        // const confirmClearBtn = document.getElementById('confirmClearBtn');
+        // const cancelClearBtn = document.getElementById('cancelClearBtn');
+
+
+        let userName = '';
+        let userEmail = '';
+        let userScore = 0;
+        let db; // Firestore instance
+        let auth; // Auth instance
+        let currentUserId = ''; // To store the authenticated user ID
+
+        // Initialize Firebase and set up authentication
+        async function initializeFirebase() {
+            try {
+                // Global variables provided by the Canvas environment
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Sign in with custom token if available, otherwise anonymously
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Listen for auth state changes to get the user ID
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        userIdDisplay.textContent = currentUserId; // Display user ID
+                        console.log("Firebase initialized. User ID:", currentUserId);
+                        // Start listening to leaderboard updates only after auth is ready
+                        setupLeaderboardListener();
+                    } else {
+                        console.log("No user signed in.");
+                        currentUserId = crypto.randomUUID(); // Fallback for unauthenticated
+                        userIdDisplay.textContent = currentUserId;
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                // Optionally display an error message to the user
+            }
+        }
+
+        // Function to render quiz questions
+        function renderQuiz() {
+            quizForm.innerHTML = ''; // Clear previous questions
+            quizQuestions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.classList.add('question-item');
+                questionDiv.innerHTML = `
+                    <p class="text-lg font-semibold text-gray-800 mb-3">${index + 1}. ${q.question}</p>
+                    ${q.options.map((option, optIndex) => `
+                        <label class="text-gray-700">
+                            <input type="radio" name="question${index}" value="${option}" class="mr-2">
+                            ${option}
+                        </label>
+                    `).join('')}
+                `;
+                quizForm.appendChild(questionDiv);
+            });
+            totalQuestionsDisplay.textContent = quizQuestions.length;
+        }
+
+        // Function to save quiz result to Firestore
+        async function saveQuizResult(name, email, score, answers) {
+            if (!db) {
+                console.error("Firestore not initialized.");
+                return;
+            }
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const resultsCollectionRef = collection(db, `artifacts/${appId}/public/data/quiz_results`);
+                await addDoc(resultsCollectionRef, {
+                    name: name,
+                    email: email,
+                    score: score,
+                    answers: answers,
+                    timestamp: serverTimestamp(),
+                    userId: currentUserId
+                });
+                console.log("Quiz result saved to Firestore.");
+            } catch (e) {
+                console.error("Error adding document: ", e);
+            }
+        }
+
+        // Function to set up real-time leaderboard listener
+        function setupLeaderboardListener() {
+            if (!db) {
+                console.error("Firestore not initialized for leaderboard listener.");
+                return;
+            }
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const resultsCollectionRef = collection(db, `artifacts/${appId}/public/data/quiz_results`);
+            const q = query(resultsCollectionRef);
+
+            onSnapshot(q, (snapshot) => {
+                const results = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    results.push({
+                        id: doc.id,
+                        name: data.name,
+                        email: data.email,
+                        score: data.score,
+                        answers: data.answers || [],
+                        timestamp: data.timestamp ? data.timestamp.toDate() : new Date()
+                    });
+                });
+
+                // Sort results: highest score first, then by earliest timestamp for ties
+                results.sort((a, b) => {
+                    if (b.score !== a.score) {
+                        return b.score - a.score;
+                    }
+                    return a.timestamp.getTime() - b.timestamp.getTime();
+                });
+
+                renderLeaderboard(results);
+            }, (error) => {
+                console.error("Error fetching leaderboard: ", error);
+            });
+        }
+
+        // Function to render the leaderboard table
+        function renderLeaderboard(results) {
+            leaderboardBody.innerHTML = '';
+            if (results.length === 0) {
+                leaderboardBody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500">No results yet. Be the first!</td></tr>';
+                return;
+            }
+
+            results.forEach((entry, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="font-bold">${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.email || 'N/A'}</td>
+                    <td>${entry.score}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        }
+
+        // Removed clearLeaderboard function as the button is gone.
+
+        // Basic email validation
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Event listener for Start Quiz button
+        startQuizBtn.addEventListener('click', () => {
+            userName = userNameInput.value.trim();
+            userEmail = userEmailInput.value.trim();
+
+            let isValid = true;
+
+            if (userName === '') {
+                nameError.classList.remove('hidden');
+                isValid = false;
+            } else {
+                nameError.classList.add('hidden');
+            }
+
+            if (userEmail === '' || !isValidEmail(userEmail)) {
+                emailError.classList.remove('hidden');
+                isValid = false;
+            } else {
+                emailError.classList.add('hidden');
+            }
+
+            if (isValid) {
+                introSection.classList.add('hidden');
+                quizSection.classList.remove('hidden');
+                renderQuiz();
+            }
+        });
+
+        // Event listener for Submit Quiz button
+        submitQuizBtn.addEventListener('click', async () => {
+            userScore = 0;
+            let allAnswered = true;
+            const userAnswers = [];
+
+            quizQuestions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+                const questionText = q.question;
+                let selectedAnswer = null;
+                let isCorrect = false;
+
+                if (!selectedOption) {
+                    allAnswered = false;
+                } else {
+                    selectedAnswer = selectedOption.value;
+                    if (selectedAnswer === q.correctAnswer) {
+                        userScore++;
+                        isCorrect = true;
+                    }
+                }
+                userAnswers.push({
+                    question: questionText,
+                    selected: selectedAnswer,
+                    correct: q.correctAnswer,
+                    isCorrect: isCorrect
+                });
+            });
+
+            if (!allAnswered) {
+                quizError.classList.remove('hidden');
+            } else {
+                quizError.classList.add('hidden');
+                quizSection.classList.add('hidden');
+                resultSection.classList.remove('hidden');
+                scoreDisplay.textContent = userScore;
+
+                await saveQuizResult(userName, userEmail, userScore, userAnswers);
+            }
+        });
+
+        // Event listener for Download Leaderboard button
+        downloadLeaderboardBtn.addEventListener('click', async () => {
+            if (!db) {
+                console.error("Firestore not initialized for download.");
+                return;
+            }
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const resultsCollectionRef = collection(db, `artifacts/${appId}/public/data/quiz_results`);
+            const querySnapshot = await getDocs(resultsCollectionRef);
+
+            let allResults = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                allResults.push({
+                    name: data.name,
+                    email: data.email,
+                    score: data.score,
+                    answers: data.answers || [],
+                    timestamp: data.timestamp ? data.timestamp.toDate() : new Date()
+                });
+            });
+
+            allResults.sort((a, b) => {
+                if (b.score !== a.score) {
+                    return b.score - a.score;
+                }
+                return a.timestamp.getTime() - b.timestamp.getTime();
+            });
+
+            let csvContent = "Rank,Name,Email,Score";
+            quizQuestions.forEach((q, index) => {
+                csvContent += `,"Q${index + 1} Selected","Q${index + 1} Correct","Q${index + 1} Is Correct"`;
+            });
+            csvContent += "\n";
+
+            allResults.forEach((entry, index) => {
+                let row = `${index + 1},"${entry.name}","${entry.email || 'N/A'}",${entry.score}`;
+                entry.answers.forEach(answer => {
+                    const selected = answer.selected ? answer.selected.replace(/"/g, '""') : '';
+                    const correct = answer.correct ? answer.correct.replace(/"/g, '""') : '';
+                    row += `,"${selected}","${correct}",${answer.isCorrect}`;
+                });
+                csvContent += row + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'gdg_leaderboard_with_answers.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } else {
+                window.open('data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
+            }
+        });
+
+        // Removed event listeners for clear leaderboard button and modal.
+        // clearLeaderboardBtn.addEventListener('click', () => {
+        //     confirmationModal.style.display = 'flex';
+        // });
+        // confirmClearBtn.addEventListener('click', async () => {
+        //     await clearLeaderboard();
+        //     confirmationModal.style.display = 'none';
+        // });
+        // cancelClearBtn.addEventListener('click', () => {
+        //     confirmationModal.style.display = 'none';
+        // });
+
+        // Initialize Firebase when the window loads
+        window.onload = initializeFirebase;
+    </script>
+</body>
+</html>
